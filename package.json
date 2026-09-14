@@ -1,0 +1,22 @@
+{
+  "name": "assia-sweet",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm run dev -w @assia/api\" \"npm run dev -w @assia/web\"",
+    "build": "npm run build -w @assia/api && npm run build -w @assia/web",
+    "start": "concurrently -k -n api,web \"npm run start -w @assia/api\" \"npm run start -w @assia/web\"",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run build -w @assia/api && node --test tests/api.test.cjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "typescript": "^5.9.0",
+    "@types/node": "^22.0.0"
+  }
+}
