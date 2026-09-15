@@ -81,7 +81,7 @@ const baseRender=render,baseAdd=add;
 const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 let motionPaused=motionPreference.matches,animationContext=null,cleanups=[],introPlayed=true;
 const reduced=()=>motionPaused||motionPreference.matches;
-function cleanupKingdom(){cleanups.forEach(fn=>fn());cleanups=[];animationContext?.revert();animationContext=null;document.querySelector('.realm-hero')?.classList.remove('motion-journey');}
+function cleanupKingdom(){cleanups.forEach(fn=>fn());cleanups=[];animationContext?.revert();animationContext=null;document.querySelector('.realm-hero')?.classList.remove('motion-journey');document.querySelector('.reviews-chapter')?.classList.remove('reviews-motion');}
 let motionChromeReady=false;
 function setupMotionChrome(){
  if(motionChromeReady||!window.gsap||motionPreference.matches||!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
@@ -152,25 +152,32 @@ function setupKingdom(enter=false){if(!window.gsap||!window.ScrollTrigger||reduc
     .to({}, {duration:.08},.92);
    return ()=>{hero.classList.remove('motion-journey');destination.inert=false;copy.inert=false;};
   });
-  const reviews=document.querySelector('.reviews-chapter');
-  if(reviews)mm.add('(min-width: 901px) and (min-height: 700px)',()=>{
-   const stage=reviews.querySelector('.reviews-stage'),cards=[...reviews.querySelectorAll('.review-card')];
-   reviews.classList.add('reviews-motion');
-   gsap.set(cards,{yPercent:118,autoAlpha:0,scale:.94});
-   gsap.set(cards[0],{rotation:-2.5});gsap.set(cards[1],{rotation:2});gsap.set(cards[2],{rotation:-1});
-   const deck=gsap.timeline({scrollTrigger:{id:'review-stack',trigger:stage,start:'top top',end:()=>'+='+Math.round(innerHeight*2.35),pin:true,scrub:.7,anticipatePin:1,invalidateOnRefresh:true}});
-   deck.to(cards[0],{yPercent:0,autoAlpha:1,scale:1,duration:.22,ease:'power2.out'},0)
-    .to(cards[0],{y:-34,scale:.96,rotation:-4,duration:.18,ease:'power1.inOut'},.27)
-    .to(cards[1],{yPercent:0,autoAlpha:1,scale:1,duration:.22,ease:'power2.out'},.27)
-    .to(cards[0],{y:-62,scale:.92,rotation:-5.5,duration:.18,ease:'power1.inOut'},.56)
-    .to(cards[1],{y:-28,scale:.96,rotation:3.5,duration:.18,ease:'power1.inOut'},.56)
-    .to(cards[2],{yPercent:0,autoAlpha:1,scale:1,duration:.22,ease:'power2.out'},.56)
-    .to('.review-heart',{x:145,y:-95,rotation:24,scale:1.12,duration:.88,ease:'sine.inOut'},0)
-    .to('.review-bear',{x:-130,y:-105,rotation:-10,scale:1.08,duration:.88,ease:'sine.inOut'},0)
-    .to({}, {duration:.14},.86);
-   return ()=>reviews.classList.remove('reviews-motion');
-  });
  }
+  const reviews=document.querySelector('.reviews-chapter');
+  if(reviews){
+   const reviewsMm=gsap.matchMedia();
+   cleanups.push(()=>reviewsMm.revert());
+   // Width-only: min-height:700 was skipping the stack on many laptop viewports
+   reviewsMm.add('(min-width: 901px)',()=>{
+    const stage=reviews.querySelector('.reviews-stage'),cards=[...reviews.querySelectorAll('.review-card')];
+    if(!stage||cards.length<3)return;
+    reviews.classList.add('reviews-motion');
+    gsap.set(cards,{yPercent:118,autoAlpha:0,scale:.94,y:0});
+    gsap.set(cards[0],{rotation:-2.5});gsap.set(cards[1],{rotation:2});gsap.set(cards[2],{rotation:-1});
+    const deck=gsap.timeline({scrollTrigger:{id:'review-stack',trigger:stage,start:'top top',end:()=>'+='+Math.round(innerHeight*2.35),pin:true,scrub:.7,anticipatePin:1,invalidateOnRefresh:true,fastScrollEnd:true}});
+    deck.to(cards[0],{yPercent:0,autoAlpha:1,scale:1,duration:.22,ease:'power2.out'},0)
+     .to(cards[0],{y:-34,scale:.96,rotation:-4,duration:.18,ease:'power1.inOut'},.27)
+     .to(cards[1],{yPercent:0,autoAlpha:1,scale:1,duration:.22,ease:'power2.out'},.27)
+     .to(cards[0],{y:-62,scale:.92,rotation:-5.5,duration:.18,ease:'power1.inOut'},.56)
+     .to(cards[1],{y:-28,scale:.96,rotation:3.5,duration:.18,ease:'power1.inOut'},.56)
+     .to(cards[2],{yPercent:0,autoAlpha:1,scale:1,duration:.22,ease:'power2.out'},.56)
+     .to('.review-heart',{x:145,y:-95,rotation:24,scale:1.12,duration:.88,ease:'sine.inOut'},0)
+     .to('.review-bear',{x:-130,y:-105,rotation:-10,scale:1.08,duration:.88,ease:'sine.inOut'},0)
+     .to({}, {duration:.14},.86);
+    requestAnimationFrame(()=>ScrollTrigger.refresh());
+    return ()=>reviews.classList.remove('reviews-motion');
+   });
+  }
  if(document.querySelector('.ribbon-track')){const ribbon=gsap.to('.ribbon-track',{xPercent:-50,duration:28,repeat:-1,ease:'none'});ScrollTrigger.create({trigger:'.royal-ribbon',start:'top bottom',end:'bottom top',onUpdate:self=>{const boost=Math.min(5,1+Math.abs(self.getVelocity())/650);gsap.to(ribbon,{timeScale:boost,duration:.15,overwrite:true,onComplete:()=>gsap.to(ribbon,{timeScale:1,duration:.8})});}});}
  if(document.querySelector('.giant-gummy')){gsap.fromTo('.giant-gummy',{rotation:-14,y:40},{rotation:12,y:-30,ease:'none',scrollTrigger:{trigger:'.gummy-chapter',start:'top bottom',end:'bottom top',scrub:1.4}});gsap.from('.halo',{scale:.7,scrollTrigger:{trigger:'.gummy-chapter',start:'top bottom',end:'center center',scrub:1}});gsap.to('.halo',{rotation:360,duration:36,repeat:-1,ease:'none'});gsap.fromTo('.chapter-copy',{xPercent:7},{xPercent:-3,ease:'none',scrollTrigger:{trigger:'.gummy-chapter',start:'top bottom',end:'bottom top',scrub:1.3}});}
  document.querySelectorAll('.product-picture').forEach(picture=>{const image=picture.querySelector('img');if(!image)return;gsap.fromTo(image,{yPercent:-3},{yPercent:3,ease:'none',scrollTrigger:{trigger:picture,start:'top bottom',end:'bottom top',scrub:1.2}});});
