@@ -1,0 +1,13 @@
+# Monorepo: install from repo root, build the Next.js web app.
+# In Netlify UI, leave Base directory empty and set Package directory to "apps/web"
+# (or leave Package directory empty — this root config is enough).
+
+[build]
+  command = "npm run build -w @assia/web"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

@@ -1,3 +1,23 @@
 import type { NextConfig } from 'next';
-const config: NextConfig = {async rewrites() {return [{source:'/api/:path*',destination:`${process.env.API_ORIGIN || 'http://127.0.0.1:3001'}/api/:path*`}];}};
+
+/**
+ * Locally, `API_ORIGIN` (see `.env.local`) proxies `/api/*` to Nest.
+ * On Netlify, leave `API_ORIGIN` unset so Next.js route handlers serve the API.
+ */
+const apiOrigin = process.env.API_ORIGIN?.trim();
+
+const config: NextConfig = {
+  async rewrites() {
+    if (!apiOrigin) {
+      return [];
+    }
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiOrigin}/api/:path*`,
+      },
+    ];
+  },
+};
+
 export default config;
