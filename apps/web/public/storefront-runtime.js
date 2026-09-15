@@ -192,22 +192,20 @@ function setupKingdom(enter=false){if(!window.gsap||!window.ScrollTrigger||reduc
   const setHeaderShown=(show)=>{
    if(show===!headerHidden)return;
    headerHidden=!show;
-   gsap.to(header,{yPercent:show?0:-105,duration:.4,ease:'power3.out',overwrite:true});
+   gsap.to(header,{yPercent:show?0:-110,duration:.38,ease:'power3.out',overwrite:true});
   };
-  const syncHeaderSolid=()=>header.classList.toggle('is-solid',scrollY>24);
-  syncHeaderSolid();
   setHeaderShown(true);
-  const headerTrigger=ScrollTrigger.create({
-   start:0,
-   end:'max',
-   onUpdate:(self)=>{
-    syncHeaderSolid();
-    if(self.scroll<48){setHeaderShown(true);return;}
-    if(self.direction===1&&self.scroll>100)setHeaderShown(false);
-    else if(self.direction===-1)setHeaderShown(true);
-   }
-  });
-  cleanups.push(()=>{headerTrigger.kill();header.classList.remove('is-solid');gsap.set(header,{clearProps:'transform'});});
+  let lastY=scrollY;
+  const onScroll=()=>{
+   const y=scrollY;
+   const delta=y-lastY;
+   lastY=y;
+   if(y<40){setHeaderShown(true);return;}
+   if(delta>4)setHeaderShown(false);      // scrolling down → hide
+   else if(delta<-4)setHeaderShown(true); // scrolling up → show
+  };
+  addEventListener('scroll',onScroll,{passive:true});
+  cleanups.push(()=>{removeEventListener('scroll',onScroll);header.classList.remove('is-solid');gsap.set(header,{clearProps:'transform'});});
  }
  },document.getElementById('app'));requestAnimationFrame(()=>ScrollTrigger.refresh());}
 render=function(enter=false){const active=document.activeElement;const focus={id:active?.id,action:active?.dataset?.action,value:active?.dataset?.value,flavor:active?.dataset?.flavor};cleanupKingdom();baseRender(enter);setupMotionChrome();document.body.classList.toggle('motion-off',reduced());document.body.classList.toggle('in-kingdom',(!location.hash||location.hash==='#accueil'));const note=document.querySelector('.prototype-note');if(note){note.firstChild.textContent='Le royaume Assia ';const b=document.createElement('button');b.className='motion-switch';b.dataset.motionToggle='true';b.type='button';b.textContent=reduced()?'Animations : arrêt':'Mettre en pause';b.setAttribute('aria-pressed',String(reduced()));note.append(b);}document.title=location.hash.startsWith('#gestion')?'Gestion — Assia Sweet':'Assia Sweet — Le royaume gourmand';if(!introPlayed&&!reduced()&&document.querySelector('.realm-stage')){introPlayed=true;const curtain=document.createElement('div');curtain.className='kingdom-curtain';curtain.innerHTML='<span>assia sweet</span><i></i>';document.body.append(curtain);gsap.timeline({onComplete:()=>{curtain.remove();if(document.hidden)gsap.globalTimeline.pause();}}).fromTo(curtain.querySelector('span'),{opacity:0,y:16},{opacity:1,y:0,duration:.45,ease:'power3.out'}).fromTo(curtain.querySelector('i'),{scaleX:0},{scaleX:1,duration:.55,ease:'power2.inOut'},.2).to(curtain,{yPercent:-100,duration:.8,ease:'power4.inOut'},.75);cleanups.push(()=>curtain.remove());}setupKingdom(enter);if(enter&&!reduced()&&!document.querySelector('.realm-stage'))gsap.from('#app > :not(.prototype-note)',{opacity:0,y:10,duration:.45,ease:'power2.out'});if(!enter){const target=focus.id?document.getElementById(focus.id):[...document.querySelectorAll('[data-action],[data-flavor]')].find(el=>focus.flavor?el.dataset.flavor===focus.flavor:focus.action&&el.dataset.action===focus.action&&el.dataset.value===focus.value);target?.focus({preventScroll:true});}};
